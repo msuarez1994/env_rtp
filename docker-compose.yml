@@ -1,0 +1,45 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: ${APP_USER}
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: rtp
+    container_name: rtp_app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./projects:/var/www/
+    networks:
+      - rtp
+  db:
+    image: postgres:14.1-alpine
+    container_name: rtp_db
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+  nginx:
+    image: nginx:alpine
+    container_name: rtp-nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./projects:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - rtp
+networks:
+  rtp:
+    driver: bridge
+volumes:
+  db:
+    driver: local
